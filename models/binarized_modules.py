@@ -74,9 +74,13 @@ class BinarizeLinear(nn.Linear):
 
         if input.size(1) != 784:
             input.data=Binarize(input.data)
+            
+        # keep a record of original weight for gradient calculation
         if not hasattr(self.weight,'org'):
             self.weight.org=self.weight.data.clone()
+        # binarize the weight from original weight 
         self.weight.data=Binarize(self.weight.org)
+        
         out = nn.functional.linear(input, self.weight)
         if not self.bias is None:
             self.bias.org=self.bias.data.clone()

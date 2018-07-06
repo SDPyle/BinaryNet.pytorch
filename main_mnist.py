@@ -8,7 +8,7 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.autograd import Variable
 from models.binarized_modules import  BinarizeLinear,BinarizeConv2d
-from models.binarized_modules import  Binarize,Ternarize,Ternarize2,Ternarize3,Ternarize4,HingeLoss
+from models.binarized_modules import  Binarize,HingeLoss
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
 parser.add_argument('--batch-size', type=int, default=64, metavar='N',
@@ -110,10 +110,14 @@ def train(epoch):
 
         optimizer.zero_grad()
         loss.backward()
+        
+        # restore the original non-binarized data
         for p in list(model.parameters()):
             if hasattr(p,'org'):
                 p.data.copy_(p.org)
+        # update the non-binarized data
         optimizer.step()
+        # clamp the non-binarized original data to [-1,1]
         for p in list(model.parameters()):
             if hasattr(p,'org'):
                 p.org.copy_(p.data.clamp_(-1,1))
