@@ -11,6 +11,8 @@ import numpy as np
 def Binarize(tensor,quant_mode='det'):
     if quant_mode=='det':
         return tensor.sign()
+    elif quant_mode == 'ge':
+        return tensor.ge(0)
     else:
         return tensor.add_(1).div_(2).add_(torch.rand(tensor.size()).add(-0.5)).clamp_(0,1).round().mul_(2).add_(-1)
 
@@ -69,7 +71,17 @@ class BinarizeLinear(nn.Linear):
 
     def __init__(self, *kargs, **kwargs):
         super(BinarizeLinear, self).__init__(*kargs, **kwargs)
-
+        # initialize the 'real' positive and negative weights using normal distribution
+        self.real_pos_weights = torch.tensor(self.weight.data, requires_grad=False).normal_(1,0.1)
+        self.real_neg_weights = torch.tensor(self.weight.data, requires_grad=False).normal_(1,0.1).neg_()
+        
+    def WeightsToReal(self):        
+#        print('preWeight:')
+#        print(self.weight.data)
+        self.weight.data = self.real_neg_weights.clone().masked_scatter_(Binarize(self.weight.org, quant_mode = 'ge').byte(),self.real_pos_weights)
+#        print('postWeight:')
+#        print(self.weight.data)
+        
     def forward(self, input):
 
         if input.size(1) != 784:
@@ -79,7 +91,8 @@ class BinarizeLinear(nn.Linear):
         if not hasattr(self.weight,'org'):
             self.weight.org=self.weight.data.clone()
         # binarize the weight from original weight 
-        self.weight.data=Binarize(self.weight.org)
+        #self.weight.data=Binarize(self.weight.org)
+        self.WeightsToReal()
         
         out = nn.functional.linear(input, self.weight)
         if not self.bias is None:
