@@ -56,6 +56,7 @@ test_loader = torch.utils.data.DataLoader(
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
+        self.state = 'train'
         self.infl_ratio=3
         self.fc1 = BinarizeLinear(784, 2048*self.infl_ratio)
         self.htanh1 = nn.Hardtanh()
@@ -72,13 +73,13 @@ class Net(nn.Module):
 
     def forward(self, x):
         x = x.view(-1, 28*28)
-        x = self.fc1(x)
+        x = self.fc1(x, self.state)
         x = self.bn1(x)
         x = self.htanh1(x)
-        x = self.fc2(x)
+        x = self.fc2(x, self.state)
         x = self.bn2(x)
         x = self.htanh2(x)
-        x = self.fc3(x)
+        x = self.fc3(x, self.state)
         x = self.drop(x)
         x = self.bn3(x)
         x = self.htanh3(x)
@@ -90,13 +91,13 @@ if args.cuda:
     torch.cuda.set_device(3)
     model.cuda()
 
-
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=args.lr)
 
 
 def train(epoch):
     model.train()
+    model.state = 'train'
     for batch_idx, (data, target) in enumerate(train_loader):
         if args.cuda:
             data, target = data.cuda(), target.cuda()
@@ -127,8 +128,10 @@ def train(epoch):
                 epoch, batch_idx * len(data), len(train_loader.dataset),
                 100. * batch_idx / len(train_loader), loss.data[0]))
 
+
 def test():
     model.eval()
+    model.state = 'test'
     test_loss = 0
     correct = 0
     for data, target in test_loader:

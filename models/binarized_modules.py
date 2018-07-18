@@ -8,7 +8,7 @@ from torch.autograd import Function
 import numpy as np
 
 
-def Binarize(tensor,quant_mode='det'):
+def Binarize(tensor, quant_mode='det'):
     if quant_mode=='det':
         return tensor.sign()
     elif quant_mode == 'ge':
@@ -55,6 +55,7 @@ class SqrtHingeLossFunction(Function):
        grad_output.div_(input.numel())
        return grad_output,grad_output
 
+
 def Quantize(tensor,quant_mode='det',  params=None, numBits=8):
     tensor.clamp_(-2**(numBits-1),2**(numBits-1))
     if quant_mode=='det':
@@ -72,17 +73,22 @@ class BinarizeLinear(nn.Linear):
     def __init__(self, *kargs, **kwargs):
         super(BinarizeLinear, self).__init__(*kargs, **kwargs)
         # initialize the 'real' positive and negative weights using normal distribution
-        self.real_pos_weights = torch.tensor(self.weight.data, requires_grad=False).normal_(1,0.1)
-        self.real_neg_weights = torch.tensor(self.weight.data, requires_grad=False).normal_(1,0.1).neg_()
+        # self.real_pos_weights = torch.tensor(self.weight.data, requires_grad=False).normal_(1, 0.1)
+        # self.real_neg_weights = torch.tensor(self.weight.data, requires_grad=False).normal_(1, 0.1).neg_()
+        self.real_pos_weights = np.random.normal(1, 0.25, size=self.weight.data.shape)
+        self.real_neg_weights = -1*np.random.normal(1, 0.25, size=self.weight.data.shape)
         
-    def WeightsToReal(self):        
-#        print('preWeight:')
-#        print(self.weight.data)
-        self.weight.data = self.real_neg_weights.clone().masked_scatter_(Binarize(self.weight.org, quant_mode = 'ge').byte(),self.real_pos_weights)
-#        print('postWeight:')
-#        print(self.weight.data)
+    # def WeightsToReal(self):
+
+        # self.weight.data = torch.tensor(np.where(Binarize(self.weight.org, quant_mode='ge'), self.real_pos_weights, self.real_neg_weights), dtype=torch.float)
+
+        # self.weight.data = self.real_neg_weights.clone_().masked_scatter_(Binarize(self.weight.org, quant_mode = 'ge').byte(),self.real_pos_weights)
+        # print('posWeight:')
+        # print(self.real_pos_weights)
+        # print('negWeight:')
+        # print(self.real_neg_weights)
         
-    def forward(self, input):
+    def forward(self, input, state):
 
         if input.size(1) != 784:
             input.data=Binarize(input.data)
@@ -90,10 +96,17 @@ class BinarizeLinear(nn.Linear):
         # keep a record of original weight for gradient calculation
         if not hasattr(self.weight,'org'):
             self.weight.org=self.weight.data.clone()
-        # binarize the weight from original weight 
-        #self.weight.data=Binarize(self.weight.org)
-        self.WeightsToReal()
-        
+
+        # binarize the weight from original weight
+        if state == 'train':
+            self.weight.data = Binarize(self.weight.org)
+        else:
+            self.weight.data = torch.tensor(
+                np.where(Binarize(self.weight.org, quant_mode='ge'), self.real_pos_weights, self.real_neg_weights),
+                dtype=torch.float)
+
+        # print(self.weight.data)
+
         out = nn.functional.linear(input, self.weight)
         if not self.bias is None:
             self.bias.org=self.bias.data.clone()
