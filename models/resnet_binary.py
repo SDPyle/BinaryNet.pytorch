@@ -143,7 +143,7 @@ class ResNet(nn.Module):
         x = x.view(x.size(0), -1)
         x = self.bn2(x)
         x = self.tanh2(x)
-        x = self.fc(x)
+        x = self.fc(x, 'train')
         x = self.bn3(x)
         x = self.logsoftmax(x)
 
