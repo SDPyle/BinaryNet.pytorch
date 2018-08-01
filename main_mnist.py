@@ -73,13 +73,13 @@ class Net(nn.Module):
 
     def forward(self, x):
         x = x.view(-1, 28*28)
-        x = self.fc1(x, self.state)
+        x = self.fc1(x)
         x = self.bn1(x)
         x = self.htanh1(x)
-        x = self.fc2(x, self.state)
+        x = self.fc2(x)
         x = self.bn2(x)
         x = self.htanh2(x)
-        x = self.fc3(x, self.state)
+        x = self.fc3(x)
         x = self.drop(x)
         x = self.bn3(x)
         x = self.htanh3(x)

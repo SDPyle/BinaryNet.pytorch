@@ -11,6 +11,8 @@ import numpy as np
 def Binarize(tensor, quant_mode='det'):
     if quant_mode=='det':
         return tensor.sign()
+
+    ## SDPyle modified to enable [0,1] quantizing, which is easier for array indexing
     elif quant_mode == 'ge':
         return tensor.ge(0)
     else:
@@ -72,23 +74,14 @@ class BinarizeLinear(nn.Linear):
 
     def __init__(self, *kargs, **kwargs):
         super(BinarizeLinear, self).__init__(*kargs, **kwargs)
-        # initialize the 'real' positive and negative weights using normal distribution
-        # self.real_pos_weights = torch.tensor(self.weight.data, requires_grad=False).normal_(1, 0.1)
-        # self.real_neg_weights = torch.tensor(self.weight.data, requires_grad=False).normal_(1, 0.1).neg_()
+
+        ## SDPyle modified to maintain consistent positive and negative weights
+        ## according to a normal distribution
         self.real_pos_weights = np.random.normal(1, 0.25, size=self.weight.data.shape)
         self.real_neg_weights = -1*np.random.normal(1, 0.25, size=self.weight.data.shape)
-        
-    # def WeightsToReal(self):
 
-        # self.weight.data = torch.tensor(np.where(Binarize(self.weight.org, quant_mode='ge'), self.real_pos_weights, self.real_neg_weights), dtype=torch.float)
-
-        # self.weight.data = self.real_neg_weights.clone_().masked_scatter_(Binarize(self.weight.org, quant_mode = 'ge').byte(),self.real_pos_weights)
-        # print('posWeight:')
-        # print(self.real_pos_weights)
-        # print('negWeight:')
-        # print(self.real_neg_weights)
-        
-    def forward(self, input, state):
+    ## SDPyle modified to include binarization_type for either ideal or with variations
+    def forward(self, input):
 
         if input.size(1) != 784:
             input.data=Binarize(input.data)
@@ -97,15 +90,17 @@ class BinarizeLinear(nn.Linear):
         if not hasattr(self.weight,'org'):
             self.weight.org=self.weight.data.clone()
 
-        # binarize the weight from original weight
-        if state == 'train':
-            self.weight.data = Binarize(self.weight.org)
-        else:
-            self.weight.data = torch.tensor(
-                np.where(Binarize(self.weight.org, quant_mode='ge'), self.real_pos_weights, self.real_neg_weights),
-                dtype=torch.float)
+        ## SDPyle modified to binarize either ideal [-1,+1] or with variations according
+        ## to normal distribution [mu_n+sigma_n, mu_p+sigma+p]
 
-        # print(self.weight.data)
+        # binarize the weight from original weight
+        # if binarize_type == 'ideal':
+        #     self.weight.data = Binarize(self.weight.org)
+        # else:
+        self.weight.data = torch.tensor(
+            np.where(Binarize(self.weight.org, quant_mode='ge'), self.real_pos_weights, self.real_neg_weights),
+            dtype=torch.float)
+
 
         out = nn.functional.linear(input, self.weight)
         if not self.bias is None:
@@ -119,13 +114,28 @@ class BinarizeConv2d(nn.Conv2d):
     def __init__(self, *kargs, **kwargs):
         super(BinarizeConv2d, self).__init__(*kargs, **kwargs)
 
+        ## SDPyle modified to maintain consistent positive and negative weights
+        ## according to a normal distribution
+        self.real_pos_weights = np.random.normal(1, 0.25, size=self.weight.data.shape)
+        self.real_neg_weights = -1 * np.random.normal(1, 0.25, size=self.weight.data.shape)
+
 
     def forward(self, input):
         if input.size(1) != 3:
             input.data = Binarize(input.data)
         if not hasattr(self.weight,'org'):
             self.weight.org=self.weight.data.clone()
-        self.weight.data=Binarize(self.weight.org)
+
+        ## SDPyle modified to binarize either ideal [-1,+1] or with variations according
+        ## to normal distribution [mu_n+sigma_n, mu_p+sigma+p]
+
+        # binarize the weight from original weight
+        # if binarize_type == 'ideal':
+        #     self.weight.data = Binarize(self.weight.org)
+        # else:
+        self.weight.data = torch.tensor(
+            np.where(Binarize(self.weight.org, quant_mode='ge'), self.real_pos_weights, self.real_neg_weights),
+            dtype=torch.float)
 
         out = nn.functional.conv2d(input, self.weight, None, self.stride,
                                    self.padding, self.dilation, self.groups)
