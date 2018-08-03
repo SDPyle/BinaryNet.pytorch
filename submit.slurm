@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --tasks-per-node=4
-#SBATCH --time=05:30:00
+#SBATCH --time=00:01:00
 #SBATCH --error=job.%J.err
 #SBATCH --output=job.%J.out
 #SBATCH --job-name=Simple
@@ -9,7 +9,7 @@
 
 #Select file to run
 export file="main_binary.py"
-export args="--model resnet_binary --save resnet18_binary --dataset cifar10 --gpus 0"
+export args="--model resnet_binary --dataset cifar10 --gpus 0"
 
 #Select how logs get stored
 mkdir $SLURM_JOB_ID

@@ -77,8 +77,8 @@ class BinarizeLinear(nn.Linear):
 
         ## SDPyle modified to maintain consistent positive and negative weights
         ## according to a normal distribution
-        self.real_pos_weights = torch.as_tensor(np.random.normal(1, 0.25, size=self.weight.data.shape))
-        self.real_neg_weights = torch.as_tensor(-1*np.random.normal(1, 0.25, size=self.weight.data.shape))
+        self.real_pos_weights = torch.cuda.FloatTensor(np.random.normal(1, 0.25, size=self.weight.data.shape))
+        self.real_neg_weights = torch.cuda.FloatTensor(-1*np.random.normal(1, 0.25, size=self.weight.data.shape))
 
     ## SDPyle modified to include binarization_type for either ideal or with variations
     def forward(self, input):
@@ -97,9 +97,8 @@ class BinarizeLinear(nn.Linear):
         # if binarize_type == 'ideal':
         #     self.weight.data = Binarize(self.weight.org)
         # else:
-        self.weight.data = torch.tensor(
-            np.where(Binarize(self.weight.org, quant_mode='ge'), self.real_pos_weights, self.real_neg_weights),
-            dtype=torch.FloatTensor)
+        self.weight.data = torch.cuda.FloatTensor(
+            np.where(Binarize(self.weight.org, quant_mode='ge'), self.real_pos_weights, self.real_neg_weights))
 
 
         out = nn.functional.linear(input, self.weight)
@@ -116,8 +115,8 @@ class BinarizeConv2d(nn.Conv2d):
 
         ## SDPyle modified to maintain consistent positive and negative weights
         ## according to a normal distribution
-        self.real_pos_weights = torch.as_tensor(np.random.normal(1, 0.25, size=self.weight.data.shape))
-        self.real_neg_weights = torch.as_tensor(-1 * np.random.normal(1, 0.25, size=self.weight.data.shape))
+        self.real_pos_weights = torch.cuda.FloatTensor(np.random.normal(1, 0.25, size=self.weight.data.shape))
+        self.real_neg_weights = torch.cuda.FloatTensor(-1 * np.random.normal(1, 0.25, size=self.weight.data.shape))
 
 
     def forward(self, input):
@@ -133,9 +132,8 @@ class BinarizeConv2d(nn.Conv2d):
         # if binarize_type == 'ideal':
         #     self.weight.data = Binarize(self.weight.org)
         # else:
-        self.weight.data = torch.tensor(
-            np.where(Binarize(self.weight.org, quant_mode='ge'), self.real_pos_weights, self.real_neg_weights),
-            dtype=torch.FloatTensor)
+        self.weight.data = torch.cuda.FloatTensor(
+            np.where(Binarize(self.weight.org, quant_mode='ge'), self.real_pos_weights, self.real_neg_weights))
 
         out = nn.functional.conv2d(input, self.weight, None, self.stride,
                                    self.padding, self.dilation, self.groups)
