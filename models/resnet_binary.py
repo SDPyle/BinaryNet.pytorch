@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torchvision.transforms as transforms
 import math
-from .binarized_modules import  BinarizeLinear,BinarizeConv2d
+from .binarized_modules import  BinarizeLinear, BinarizeConv2d, StochasticBinaryActivation
 
 __all__ = ['resnet_binary']
 
@@ -190,8 +190,8 @@ class ResNet_cifar10(ResNet):
                                bias=False)
         self.maxpool = lambda x: x
         self.bn1 = nn.BatchNorm2d(16*self.inflate)
-        self.tanh1 = nn.Hardtanh(inplace=True)
-        self.tanh2 = nn.Hardtanh(inplace=True)
+        self.tanh1 = StochasticBinaryActivation()
+        self.tanh2 = StochasticBinaryActivation()
         self.layer1 = self._make_layer(block, 16*self.inflate, n)
         self.layer2 = self._make_layer(block, 32*self.inflate, n, stride=2)
         self.layer3 = self._make_layer(block, 64*self.inflate, n, stride=2,do_bntan=False)
