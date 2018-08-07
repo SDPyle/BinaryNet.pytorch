@@ -145,3 +145,46 @@ class BinarizeConv2d(nn.Conv2d):
             out += self.bias.view(1, -1, 1, 1).expand_as(out)
 
         return out
+
+
+class BernoulliFunctionST(Function):
+
+    @staticmethod
+    def forward(ctx, input):
+
+        return torch.bernoulli(input)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+
+        return grad_output
+
+
+BernoulliST = BernoulliFunctionST.apply
+
+
+class HardSigmoid(nn.Module):
+
+    def __init__(self):
+        super(HardSigmoid, self).__init__()
+        self.act = nn.Hardtanh()
+
+    def forward(self, x):
+        return (self.act(x) + 1.0) / 2.0
+
+
+class StochasticBinaryActivation(nn.Module):
+
+    def __init__(self):
+        super(StochasticBinaryActivation, self).__init__()
+
+        self.act = HardSigmoid()
+
+        self.binarizer = BernoulliST
+
+    def forward(self, x):
+
+        probs = self.act(x)
+        out = self.binarizer(probs)
+
+        return out
