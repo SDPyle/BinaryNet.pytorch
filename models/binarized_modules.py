@@ -87,7 +87,7 @@ class BinarizeLinear(nn.Linear):
             input.data=Binarize(input.data)
             
         # keep a record of original weight for gradient calculation
-        if not hasattr(self.weight,'org'):
+        if not hasattr(self.weight, 'org'):
             self.weight.org=self.weight.data.clone()
 
         ## SDPyle modified to binarize either ideal [-1,+1] or with variations according
@@ -97,9 +97,11 @@ class BinarizeLinear(nn.Linear):
         # if binarize_type == 'ideal':
         #     self.weight.data = Binarize(self.weight.org)
         # else:
-        self.weight.data = torch.cuda.FloatTensor(np.where(Binarize(self.weight.org, quant_mode='ge'), self.real_pos_weights, self.real_neg_weights))
-	
-        print(self.weight.data)
+        if not self.training:
+            self.weight.data = torch.cuda.FloatTensor(
+                np.where(Binarize(self.weight.org, quant_mode='ge'), self.real_pos_weights, self.real_neg_weights))
+        else:
+            self.weight.data = Binarize(self.weight.org)
 
         out = nn.functional.linear(input, self.weight)
         if not self.bias is None:
@@ -123,7 +125,7 @@ class BinarizeConv2d(nn.Conv2d):
         if input.size(1) != 3:
             input.data = Binarize(input.data)
         if not hasattr(self.weight,'org'):
-            self.weight.org=self.weight.data.clone()
+            self.weight.org = self.weight.data.clone()
 
         ## SDPyle modified to binarize either ideal [-1,+1] or with variations according
         ## to normal distribution [mu_n+sigma_n, mu_p+sigma+p]
@@ -132,8 +134,11 @@ class BinarizeConv2d(nn.Conv2d):
         # if binarize_type == 'ideal':
         #     self.weight.data = Binarize(self.weight.org)
         # else:
-        self.weight.data = torch.cuda.FloatTensor(
-            np.where(Binarize(self.weight.org, quant_mode='ge'), self.real_pos_weights, self.real_neg_weights))
+        if not self.training:
+            self.weight.data = torch.cuda.FloatTensor(
+                np.where(Binarize(self.weight.org, quant_mode='ge'), self.real_pos_weights, self.real_neg_weights))
+        else:
+            self.weight.data = Binarize(self.weight.org)
 
         out = nn.functional.conv2d(input, self.weight, None, self.stride,
                                    self.padding, self.dilation, self.groups)
@@ -183,6 +188,6 @@ class StochasticBinaryActivation(nn.Module):
     def forward(self, x):
 
         probs = self.act(x)
-        out = self.binarizer(probs)
+        out = 2*self.binarizer(probs)-1
 
         return out
