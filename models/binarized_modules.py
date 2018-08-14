@@ -103,6 +103,8 @@ class BinarizeLinear(nn.Linear):
         else:
             self.weight.data = Binarize(self.weight.org)
 
+        print(self.weight.data)        
+
         out = nn.functional.linear(input, self.weight)
         if not self.bias is None:
             self.bias.org=self.bias.data.clone()

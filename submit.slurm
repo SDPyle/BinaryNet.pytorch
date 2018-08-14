@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --tasks-per-node=4
-#SBATCH --time=00:01:00
+#SBATCH --time=10:01:00
 #SBATCH --error=job.%J.err
 #SBATCH --output=job.%J.out
 #SBATCH --job-name=Simple
