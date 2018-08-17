@@ -77,8 +77,8 @@ class BinarizeLinear(nn.Linear):
 
         ## SDPyle modified to maintain consistent positive and negative weights
         ## according to a normal distribution
-        self.real_pos_weights = torch.cuda.FloatTensor(np.random.normal(1, 0.50, size=self.weight.data.shape))
-        self.real_neg_weights = torch.cuda.FloatTensor(-1*np.random.normal(1, 0.50, size=self.weight.data.shape))
+        self.real_pos_weights = torch.cuda.FloatTensor(np.random.normal(1, 0.00, size=self.weight.data.shape))
+        self.real_neg_weights = torch.cuda.FloatTensor(-1*np.random.normal(1, 0.00, size=self.weight.data.shape))
 
     ## SDPyle modified to include binarization_type for either ideal or with variations
     def forward(self, input):
@@ -119,8 +119,8 @@ class BinarizeConv2d(nn.Conv2d):
 
         ## SDPyle modified to maintain consistent positive and negative weights
         ## according to a normal distribution
-        self.real_pos_weights = torch.cuda.FloatTensor(np.random.normal(1, 0.50, size=self.weight.data.shape))
-        self.real_neg_weights = torch.cuda.FloatTensor(-1 * np.random.normal(1, 0.50, size=self.weight.data.shape))
+        self.real_pos_weights = torch.cuda.FloatTensor(np.random.normal(1, 0.00, size=self.weight.data.shape))
+        self.real_neg_weights = torch.cuda.FloatTensor(-1 * np.random.normal(1, 0.00, size=self.weight.data.shape))
 
 
     def forward(self, input):
@@ -194,11 +194,3 @@ class StochasticBinaryActivation(nn.Module):
 
         return out
 
-
-class SignActivation(nn.Module):
-
-    def __init__(self):
-        super(SignActivation, self).__init__()
-
-    def forward(self, x):
-        return x.sign()

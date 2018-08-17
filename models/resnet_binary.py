@@ -33,9 +33,7 @@ class BasicBlock(nn.Module):
 
         self.conv1 = Binaryconv3x3(inplanes, planes, stride)
         self.bn1 = nn.BatchNorm2d(planes)
-        self.tanh1 = SignActivation()
         self.conv2 = Binaryconv3x3(planes, planes)
-        self.tanh2 = SignActivation()
         self.bn2 = nn.BatchNorm2d(planes)
 
         self.downsample = downsample
@@ -48,7 +46,7 @@ class BasicBlock(nn.Module):
 
         out = self.conv1(x)
         out = self.bn1(out)
-        out = self.tanh1(out)
+        out = out.sign()
 
         out = self.conv2(out)
 
@@ -61,7 +59,7 @@ class BasicBlock(nn.Module):
         out += residual
         if self.do_bntan:
             out = self.bn2(out)
-            out = self.tanh2(out)
+            out = out.sign()
 
         return out
 
@@ -133,7 +131,7 @@ class ResNet(nn.Module):
         x = self.conv1(x)
         x = self.maxpool(x)
         x = self.bn1(x)
-        x = self.tanh1(x)
+        x = x.sign()
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)
@@ -142,7 +140,7 @@ class ResNet(nn.Module):
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
         x = self.bn2(x)
-        x = self.tanh2(x)
+        x = x.sign()
         x = self.fc(x)
         x = self.bn3(x)
         x = self.logsoftmax(x)
