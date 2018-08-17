@@ -195,10 +195,28 @@ class StochasticBinaryActivation(nn.Module):
         return out
 
 
+class SignFunction(Function):
+
+    @staticmethod
+    def forward(ctx, input):
+        return torch.sign(input)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        return grad_output
+
+
+SignAct = SignFunction.apply
+
+
 class SignActivation(nn.Module):
 
     def __init__(self):
         super(SignActivation, self).__init__()
 
+        self.signer = SignAct
+
     def forward(self, x):
-        return x.sign()
+        out = self.signer(x)
+
+        return out
