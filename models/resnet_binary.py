@@ -33,7 +33,9 @@ class BasicBlock(nn.Module):
 
         self.conv1 = Binaryconv3x3(inplanes, planes, stride)
         self.bn1 = nn.BatchNorm2d(planes)
+        self.tanh1 = SignActivation()
         self.conv2 = Binaryconv3x3(planes, planes)
+        self.tanh2 = SignActivation()
         self.bn2 = nn.BatchNorm2d(planes)
 
         self.downsample = downsample
@@ -46,7 +48,7 @@ class BasicBlock(nn.Module):
 
         out = self.conv1(x)
         out = self.bn1(out)
-        out = out.sign()
+        out = self.tanh1(out)
 
         out = self.conv2(out)
 
@@ -59,7 +61,7 @@ class BasicBlock(nn.Module):
         out += residual
         if self.do_bntan:
             out = self.bn2(out)
-            out = out.sign()
+            out = self.tanh2(out)
 
         return out
 
