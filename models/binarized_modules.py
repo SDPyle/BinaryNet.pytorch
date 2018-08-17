@@ -193,3 +193,12 @@ class StochasticBinaryActivation(nn.Module):
         out = 2*self.binarizer(probs)-1
 
         return out
+
+
+class SignActivation(nn.Module):
+
+    def __init__(self):
+        super(SignActivation, self).__init__()
+
+    def forward(self, x):
+        return x.sign()
