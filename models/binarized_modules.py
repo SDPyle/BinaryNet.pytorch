@@ -203,10 +203,8 @@ class SignFunction(Function):
 
     @staticmethod
     def backward(ctx, grad_output):
-        if grad_output[0] <= 1.0:
-            return grad_output
-        else:
-            return 0
+
+        return grad_output * torch.le(grad_output, 1.0)
 
 
 SignAct = SignFunction.apply
