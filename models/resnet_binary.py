@@ -33,9 +33,9 @@ class BasicBlock(nn.Module):
 
         self.conv1 = Binaryconv3x3(inplanes, planes, stride)
         self.bn1 = nn.BatchNorm2d(planes)
-        self.tanh1 = SignActivation()
+        self.tanh1 = nn.Hardtanh()
         self.conv2 = Binaryconv3x3(planes, planes)
-        self.tanh2 = SignActivation()
+        self.tanh2 = nn.Hardtanh()
         self.bn2 = nn.BatchNorm2d(planes)
 
         self.downsample = downsample
@@ -48,7 +48,7 @@ class BasicBlock(nn.Module):
 
         out = self.conv1(x)
         out = self.bn1(out)
-        out = self.tanh1(out)
+        out = self.tanh1(out).sign()
 
         out = self.conv2(out)
 
@@ -61,7 +61,7 @@ class BasicBlock(nn.Module):
         out += residual
         if self.do_bntan:
             out = self.bn2(out)
-            out = self.tanh2(out)
+            out = self.tanh2(out).sign()
 
         return out
 
@@ -190,8 +190,8 @@ class ResNet_cifar10(ResNet):
                                bias=False)
         self.maxpool = lambda x: x
         self.bn1 = nn.BatchNorm2d(16*self.inflate)
-        self.tanh1 = SignActivation()
-        self.tanh2 = SignActivation()
+        self.tanh1 = nn.Hardtanh().sign()
+        self.tanh2 = nn.Hardtanh().sign()
         self.layer1 = self._make_layer(block, 16*self.inflate, n)
         self.layer2 = self._make_layer(block, 32*self.inflate, n, stride=2)
         self.layer3 = self._make_layer(block, 64*self.inflate, n, stride=2,do_bntan=False)
