@@ -7,6 +7,8 @@ from torch.autograd import Function
 
 import numpy as np
 
+WEIGHT_SD = 0.5
+ACT_WIDTH = 10.0
 
 def Binarize(tensor, quant_mode='det'):
     if quant_mode=='det':
@@ -77,8 +79,8 @@ class BinarizeLinear(nn.Linear):
 
         ## SDPyle modified to maintain consistent positive and negative weights
         ## according to a normal distribution
-        self.real_pos_weights = torch.cuda.FloatTensor(np.random.normal(1, 0.50, size=self.weight.data.shape))
-        self.real_neg_weights = torch.cuda.FloatTensor(-1*np.random.normal(1, 0.50, size=self.weight.data.shape))
+        self.real_pos_weights = torch.cuda.FloatTensor(np.random.normal(1, WEIGHT_SD, size=self.weight.data.shape))
+        self.real_neg_weights = torch.cuda.FloatTensor(-1*np.random.normal(1, WEIGHT_SD, size=self.weight.data.shape))
 
     ## SDPyle modified to include binarization_type for either ideal or with variations
     def forward(self, input):
@@ -119,8 +121,8 @@ class BinarizeConv2d(nn.Conv2d):
 
         ## SDPyle modified to maintain consistent positive and negative weights
         ## according to a normal distribution
-        self.real_pos_weights = torch.cuda.FloatTensor(np.random.normal(1, 0.50, size=self.weight.data.shape))
-        self.real_neg_weights = torch.cuda.FloatTensor(-1 * np.random.normal(1, 0.50, size=self.weight.data.shape))
+        self.real_pos_weights = torch.cuda.FloatTensor(np.random.normal(1, WEIGHT_SD, size=self.weight.data.shape))
+        self.real_neg_weights = torch.cuda.FloatTensor(-1 * np.random.normal(1, WEIGHT_SD, size=self.weight.data.shape))
 
 
     def forward(self, input):
@@ -172,10 +174,10 @@ class HardSigmoid(nn.Module):
 
     def __init__(self):
         super(HardSigmoid, self).__init__()
-        self.act = nn.Hardtanh()
+        self.act = nn.Hardtanh(min_val=-1*ACT_WIDTH, max_val=ACT_WIDTH)
 
     def forward(self, x):
-        return (self.act(x) + 1.0) / 2.0
+        return (self.act(x) + ACT_WIDTH) / 2*ACT_WIDTH
 
 
 class StochasticBinaryActivation(nn.Module):
