@@ -28,7 +28,7 @@ def init_model(model):
 class BasicBlock(nn.Module):
     expansion = 1
 
-    def __init__(self, inplanes, planes, stride=1, downsample=None,do_bntan=True):
+    def __init__(self, inplanes, planes, stride=1, downsample=None,do_bntan=True, weight_sd=0, act_width=1):
         super(BasicBlock, self).__init__()
 
         self.conv1 = Binaryconv3x3(inplanes, planes, stride)
@@ -112,21 +112,21 @@ class ResNet(nn.Module):
     def __init__(self):
         super(ResNet, self).__init__()
 
-    def _make_layer(self, block, planes, blocks, stride=1,do_bntan=True):
+    def _make_layer(self, block, planes, blocks, weight_sd, act_width, stride=1,do_bntan=True):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
                 BinarizeConv2d(self.inplanes, planes * block.expansion,
-                          kernel_size=1, stride=stride, bias=False),
+                          kernel_size=1, stride=stride, bias=False, weight_sd=weight_sd),
                 nn.BatchNorm2d(planes * block.expansion),
             )
 
         layers = []
-        layers.append(block(self.inplanes, planes, stride, downsample))
+        layers.append(block(self.inplanes, planes, stride, downsample, weight_sd=weight_sd, act_width=act_width))
         self.inplanes = planes * block.expansion
         for i in range(1, blocks-1):
-            layers.append(block(self.inplanes, planes))
-        layers.append(block(self.inplanes, planes,do_bntan=do_bntan))
+            layers.append(block(self.inplanes, planes, weight_sd=weight_sd, act_width=act_width))
+        layers.append(block(self.inplanes, planes,do_bntan=do_bntan, weight_sd=weight_sd, act_width=act_width))
         return nn.Sequential(*layers)
 
     def forward(self, x):
@@ -181,26 +181,26 @@ class ResNet_imagenet(ResNet):
 class ResNet_cifar10(ResNet):
 
     def __init__(self, num_classes=10,
-                 block=BasicBlock, depth=18):
+                 block=BasicBlock, depth=18, weight_sd=0, act_width=1):
         super(ResNet_cifar10, self).__init__()
         self.inflate = 5
         self.inplanes = 16*self.inflate
         n = int((depth - 2) / 6)
         self.conv1 = BinarizeConv2d(3, 16*self.inflate, kernel_size=3, stride=1, padding=1,
-                               bias=False)
+                               bias=False, weight_sd=weight_sd)
         self.maxpool = lambda x: x
         self.bn1 = nn.BatchNorm2d(16*self.inflate)
-        self.tanh1 = StochasticBinaryActivation()
-        self.tanh2 = StochasticBinaryActivation()
-        self.layer1 = self._make_layer(block, 16*self.inflate, n)
-        self.layer2 = self._make_layer(block, 32*self.inflate, n, stride=2)
-        self.layer3 = self._make_layer(block, 64*self.inflate, n, stride=2,do_bntan=False)
+        self.tanh1 = StochasticBinaryActivation(act_width)
+        self.tanh2 = StochasticBinaryActivation(act_width)
+        self.layer1 = self._make_layer(block, 16*self.inflate, n, weight_sd, act_width)
+        self.layer2 = self._make_layer(block, 32*self.inflate, n, weight_sd, act_width, stride=2)
+        self.layer3 = self._make_layer(block, 64*self.inflate, n, weight_sd, act_width, stride=2,do_bntan=False)
         self.layer4 = lambda x: x
         self.avgpool = nn.AvgPool2d(8)
         self.bn2 = nn.BatchNorm1d(64*self.inflate)
         self.bn3 = nn.BatchNorm1d(10)
         self.logsoftmax = nn.LogSoftmax()
-        self.fc = BinarizeLinear(64*self.inflate, num_classes)
+        self.fc = BinarizeLinear(64*self.inflate, num_classes, weight_sd)
 
         init_model(self)
         #self.regime = {
@@ -220,8 +220,8 @@ class ResNet_cifar10(ResNet):
 
 
 def resnet_binary(**kwargs):
-    num_classes, depth, dataset = map(
-        kwargs.get, ['num_classes', 'depth', 'dataset'])
+    num_classes, depth, dataset, weight_sd, act_width = map(
+        kwargs.get, ['num_classes', 'depth', 'dataset', 'weight_sd', 'act_width'])
     if dataset == 'imagenet':
         num_classes = num_classes or 1000
         depth = depth or 50
@@ -245,4 +245,4 @@ def resnet_binary(**kwargs):
         num_classes = num_classes or 10
         depth = depth or 18
         return ResNet_cifar10(num_classes=num_classes,
-                              block=BasicBlock, depth=depth)
+                              block=BasicBlock, depth=depth, weight_sd=weight_sd, act_width=act_width)

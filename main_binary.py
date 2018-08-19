@@ -66,6 +66,14 @@ parser.add_argument('--resume', default='', type=str, metavar='PATH',
 parser.add_argument('-e', '--evaluate', type=str, metavar='FILE',
                     help='evaluate model FILE on validation set')
 
+## SDPyle adding arguments for weight std. dev. and stochastic activation function width ##
+
+parser.add_argument('--weight_sd', default=0, type=float,
+                    metavar='Weight SD', help='weight standard deviation (default: 0)')
+parser.add_argument('--act_width', default=1, type=float,
+                    metavar='AW', help='Hard Sigmoid Stochastic Activation Function Width (default: 1)')
+###### SDPyle end
+
 
 def main():
     global args, best_prec1
@@ -97,7 +105,8 @@ def main():
     # create model
     logging.info("creating model %s", args.model)
     model = models.__dict__[args.model]
-    model_config = {'input_size': args.input_size, 'dataset': args.dataset}
+    model_config = {'input_size': args.input_size, 'dataset': args.dataset,
+                    'weight_sd': args.weight_sd, 'act_width': args.act_width}
 
     if args.model_config is not '':
         model_config = dict(model_config, **literal_eval(args.model_config))

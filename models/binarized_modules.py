@@ -7,9 +7,6 @@ from torch.autograd import Function
 
 import numpy as np
 
-WEIGHT_SD = 0.5
-ACT_WIDTH = 10.0
-
 def Binarize(tensor, quant_mode='det'):
     if quant_mode=='det':
         return tensor.sign()
@@ -74,15 +71,15 @@ import torch.nn._functions as tnnf
 
 class BinarizeLinear(nn.Linear):
 
-    def __init__(self, *kargs, **kwargs):
+    def __init__(self, weight_sd=0, *kargs, **kwargs):
         super(BinarizeLinear, self).__init__(*kargs, **kwargs)
 
         global WEIGHT_SD
 
         ## SDPyle modified to maintain consistent positive and negative weights
         ## according to a normal distribution
-        self.real_pos_weights = torch.cuda.FloatTensor(np.random.normal(1, WEIGHT_SD, size=self.weight.data.shape))
-        self.real_neg_weights = torch.cuda.FloatTensor(-1*np.random.normal(1, WEIGHT_SD, size=self.weight.data.shape))
+        self.real_pos_weights = torch.cuda.FloatTensor(np.random.normal(1, weight_sd, size=self.weight.data.shape))
+        self.real_neg_weights = torch.cuda.FloatTensor(-1*np.random.normal(1, weight_sd, size=self.weight.data.shape))
 
     ## SDPyle modified to include binarization_type for either ideal or with variations
     def forward(self, input):
@@ -118,15 +115,13 @@ class BinarizeLinear(nn.Linear):
 
 class BinarizeConv2d(nn.Conv2d):
 
-    def __init__(self, *kargs, **kwargs):
+    def __init__(self, weight_sd=0, *kargs, **kwargs):
         super(BinarizeConv2d, self).__init__(*kargs, **kwargs)
-
-        global WEIGHT_SD
 
         ## SDPyle modified to maintain consistent positive and negative weights
         ## according to a normal distribution
-        self.real_pos_weights = torch.cuda.FloatTensor(np.random.normal(1, WEIGHT_SD, size=self.weight.data.shape))
-        self.real_neg_weights = torch.cuda.FloatTensor(-1 * np.random.normal(1, WEIGHT_SD, size=self.weight.data.shape))
+        self.real_pos_weights = torch.cuda.FloatTensor(np.random.normal(1, weight_sd, size=self.weight.data.shape))
+        self.real_neg_weights = torch.cuda.FloatTensor(-1 * np.random.normal(1, weight_sd, size=self.weight.data.shape))
 
 
     def forward(self, input):
@@ -176,26 +171,22 @@ BernoulliST = BernoulliFunctionST.apply
 
 class HardSigmoid(nn.Module):
 
-    def __init__(self):
+    def __init__(self, act_width):
         super(HardSigmoid, self).__init__()
-
-        global ACT_WIDTH
-
-        self.act = nn.Hardtanh(min_val=-1*ACT_WIDTH, max_val=ACT_WIDTH)
+        self.act_width = act_width
+        self.act = nn.Hardtanh(min_val=-1*act_width, max_val=act_width)
 
     def forward(self, x):
 
-        global ACT_WIDTH
-
-        return (self.act(x) + ACT_WIDTH) / 2*ACT_WIDTH
+        return (self.act(x) + self.act_width) / 2*self.act_width
 
 
 class StochasticBinaryActivation(nn.Module):
 
-    def __init__(self):
+    def __init__(self, act_width):
         super(StochasticBinaryActivation, self).__init__()
 
-        self.act = HardSigmoid()
+        self.act = HardSigmoid(act_width)
 
         self.binarizer = BernoulliST
 
