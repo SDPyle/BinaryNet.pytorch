@@ -33,9 +33,9 @@ class BasicBlock(nn.Module):
 
         self.conv1 = Binaryconv3x3(inplanes, planes, stride)
         self.bn1 = nn.BatchNorm2d(planes)
-        self.tanh1 = nn.Hardtanh(inplace=True)
+        self.tanh1 = StochasticBinaryActivation()
         self.conv2 = Binaryconv3x3(planes, planes)
-        self.tanh2 = nn.Hardtanh(inplace=True)
+        self.tanh2 = StochasticBinaryActivation()
         self.bn2 = nn.BatchNorm2d(planes)
 
         self.downsample = downsample
