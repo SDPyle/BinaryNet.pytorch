@@ -77,6 +77,8 @@ class BinarizeLinear(nn.Linear):
     def __init__(self, *kargs, **kwargs):
         super(BinarizeLinear, self).__init__(*kargs, **kwargs)
 
+        global WEIGHT_SD
+
         ## SDPyle modified to maintain consistent positive and negative weights
         ## according to a normal distribution
         self.real_pos_weights = torch.cuda.FloatTensor(np.random.normal(1, WEIGHT_SD, size=self.weight.data.shape))
@@ -118,6 +120,8 @@ class BinarizeConv2d(nn.Conv2d):
 
     def __init__(self, *kargs, **kwargs):
         super(BinarizeConv2d, self).__init__(*kargs, **kwargs)
+
+        global WEIGHT_SD
 
         ## SDPyle modified to maintain consistent positive and negative weights
         ## according to a normal distribution
@@ -174,9 +178,15 @@ class HardSigmoid(nn.Module):
 
     def __init__(self):
         super(HardSigmoid, self).__init__()
+
+        global ACT_WIDTH
+
         self.act = nn.Hardtanh(min_val=-1*ACT_WIDTH, max_val=ACT_WIDTH)
 
     def forward(self, x):
+
+        global ACT_WIDTH
+
         return (self.act(x) + ACT_WIDTH) / 2*ACT_WIDTH
 
 
