@@ -155,7 +155,7 @@ class BernoulliFunctionST(Function):
     @staticmethod
     def backward(ctx, grad_output):
 
-        return grad_output
+        return grad_output * torch.le(grad_output.abs(), 1.0).float()
 
 
 BernoulliST = BernoulliFunctionST.apply
@@ -165,7 +165,7 @@ class HardSigmoid(nn.Module):
 
     def __init__(self):
         super(HardSigmoid, self).__init__()
-        self.act = nn.Hardtanh()
+        self.act = nn.Hardtanh(min_val=-1.0, max_val=1.0)
 
     def forward(self, x):
         return (self.act(x) + 1.0) / 2.0
