@@ -203,9 +203,10 @@ class SignFunction(Function):
 
     @staticmethod
     def backward(ctx, grad_output):
-
-        return grad_output * torch.le(grad_output, 1.0)
-
+        
+        out = grad_output * torch.le(grad_output.abs(), 1.0).float()
+        #print(out)
+        return out
 
 SignAct = SignFunction.apply
 
@@ -214,11 +215,12 @@ class SignActivation(nn.Module):
 
     def __init__(self):
         super(SignActivation, self).__init__()
-
-        self.signer = SignAct
+        self.act = nn.Hardtanh()
+        self.signer = SignFunction.apply
 
     def forward(self, x):
-        out = self.signer(x)
+        out1 = self.act(x)
+        out = self.signer(out1)
 
         return out
 
