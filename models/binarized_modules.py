@@ -97,11 +97,8 @@ class BinarizeLinear(nn.Linear):
         # if binarize_type == 'ideal':
         #     self.weight.data = Binarize(self.weight.org)
         # else:
-        if not self.training:
-            self.weight.data = torch.cuda.FloatTensor(
-                np.where(Binarize(self.weight.org, quant_mode='ge'), self.real_pos_weights, self.real_neg_weights))
-        else:
-            self.weight.data = Binarize(self.weight.org)
+        self.weight.data = torch.cuda.FloatTensor(
+            np.where(Binarize(self.weight.org, quant_mode='ge'), self.real_pos_weights, self.real_neg_weights))
 
         print(self.weight.data)        
 
@@ -136,11 +133,9 @@ class BinarizeConv2d(nn.Conv2d):
         # if binarize_type == 'ideal':
         #     self.weight.data = Binarize(self.weight.org)
         # else:
-        if not self.training:
-            self.weight.data = torch.cuda.FloatTensor(
-                np.where(Binarize(self.weight.org, quant_mode='ge'), self.real_pos_weights, self.real_neg_weights))
-        else:
-            self.weight.data = Binarize(self.weight.org)
+
+        self.weight.data = torch.cuda.FloatTensor(
+            np.where(Binarize(self.weight.org, quant_mode='ge'), self.real_pos_weights, self.real_neg_weights))
 
         out = nn.functional.conv2d(input, self.weight, None, self.stride,
                                    self.padding, self.dilation, self.groups)
