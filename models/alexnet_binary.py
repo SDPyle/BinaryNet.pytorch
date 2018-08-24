@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torchvision.transforms as transforms
-from .binarized_modules import  BinarizeLinear,BinarizeConv2d
+from .binarized_modules import  BinarizeLinear, BinarizeConv2d, StochasticBinaryActivation
 
 __all__ = ['alexnet_binary']
 
@@ -13,38 +13,38 @@ class AlexNetOWT_BN(nn.Module):
             BinarizeConv2d(3, int(64*self.ratioInfl), kernel_size=11, stride=4, padding=2),
             nn.MaxPool2d(kernel_size=3, stride=2),
             nn.BatchNorm2d(int(64*self.ratioInfl)),
-            nn.Hardtanh(inplace=True),
+            StochasticBinaryActivation(),
             BinarizeConv2d(int(64*self.ratioInfl), int(192*self.ratioInfl), kernel_size=5, padding=2),
             nn.MaxPool2d(kernel_size=3, stride=2),
             nn.BatchNorm2d(int(192*self.ratioInfl)),
-            nn.Hardtanh(inplace=True),
+            StochasticBinaryActivation(),
 
             BinarizeConv2d(int(192*self.ratioInfl), int(384*self.ratioInfl), kernel_size=3, padding=1),
             nn.BatchNorm2d(int(384*self.ratioInfl)),
-            nn.Hardtanh(inplace=True),
+            StochasticBinaryActivation(),
 
             BinarizeConv2d(int(384*self.ratioInfl), int(256*self.ratioInfl), kernel_size=3, padding=1),
             nn.BatchNorm2d(int(256*self.ratioInfl)),
-            nn.Hardtanh(inplace=True),
+            StochasticBinaryActivation(),
 
             BinarizeConv2d(int(256*self.ratioInfl), 256, kernel_size=3, padding=1),
             nn.MaxPool2d(kernel_size=3, stride=2),
             nn.BatchNorm2d(256),
-            nn.Hardtanh(inplace=True)
+            StochasticBinaryActivation()
 
         )
         self.classifier = nn.Sequential(
             BinarizeLinear(256 * 6 * 6, 4096),
             nn.BatchNorm1d(4096),
-            nn.Hardtanh(inplace=True),
+            StochasticBinaryActivation(),
             #nn.Dropout(0.5),
             BinarizeLinear(4096, 4096),
             nn.BatchNorm1d(4096),
-            nn.Hardtanh(inplace=True),
+            StochasticBinaryActivation(),
             #nn.Dropout(0.5),
             BinarizeLinear(4096, num_classes),
             nn.BatchNorm1d(1000),
-            nn.LogSoftmax()
+            StochasticBinaryActivation()
         )
 
         #self.regime = {

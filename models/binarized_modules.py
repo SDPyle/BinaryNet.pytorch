@@ -183,6 +183,6 @@ class StochasticBinaryActivation(nn.Module):
     def forward(self, x):
 
         probs = self.act(x)
-        out = 2*self.binarizer(probs)-1
+        out = self.binarizer(probs)
 
         return out
