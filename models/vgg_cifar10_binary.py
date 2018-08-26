@@ -56,7 +56,7 @@ class VGG_Cifar10(nn.Module):
             #nn.Dropout(0.5),
             BinarizeLinear(1024, num_classes, bias=True),
             nn.BatchNorm1d(num_classes, affine=False),
-            StochasticBinaryActivation()
+            nn.LogSoftmax() 
         )
 
         self.regime = {
