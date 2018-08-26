@@ -9,7 +9,7 @@
 
 #Select file to run
 export file="main_binary.py"
-export args="--model resnet_binary --dataset cifar10 --gpus 0"
+export args="--model vgg_cifar10_binary --dataset cifar10 --gpus 0 "
 
 #Select how logs get stored
 mkdir $SLURM_JOB_ID
