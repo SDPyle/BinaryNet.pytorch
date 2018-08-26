@@ -17,8 +17,8 @@ class VGG_Cifar10(nn.Module):
             nn.BatchNorm2d(128*self.infl_ratio),
             StochasticBinaryActivation(),
 
-            BinarizeConv2d(128*self.infl_ratio, 128*self.infl_ratio, kernel_size=3, padding=1, bias=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
+            BinarizeConv2d(128*self.infl_ratio, 128*self.infl_ratio, kernel_size=3, stride=2, padding=1, bias=True),
+            #nn.MaxPool2d(kernel_size=2, stride=2),
             nn.BatchNorm2d(128*self.infl_ratio),
             StochasticBinaryActivation(),
 
@@ -28,8 +28,8 @@ class VGG_Cifar10(nn.Module):
             StochasticBinaryActivation(),
 
 
-            BinarizeConv2d(256*self.infl_ratio, 256*self.infl_ratio, kernel_size=3, padding=1, bias=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
+            BinarizeConv2d(256*self.infl_ratio, 256*self.infl_ratio, kernel_size=3, stride=2, padding=1, bias=True),
+            #nn.MaxPool2d(kernel_size=2, stride=2),
             nn.BatchNorm2d(256*self.infl_ratio),
             StochasticBinaryActivation(),
 
@@ -39,8 +39,8 @@ class VGG_Cifar10(nn.Module):
             StochasticBinaryActivation(),
 
 
-            BinarizeConv2d(512*self.infl_ratio, 512, kernel_size=3, padding=1, bias=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
+            BinarizeConv2d(512*self.infl_ratio, 512, kernel_size=3, stride=2, padding=1, bias=True),
+            #nn.MaxPool2d(kernel_size=2, stride=2),
             nn.BatchNorm2d(512),
             StochasticBinaryActivation()
 
