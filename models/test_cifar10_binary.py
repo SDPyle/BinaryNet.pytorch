@@ -13,36 +13,45 @@ class Test_Cifar10(nn.Module):
         self.infl_ratio=1;
         self.features = nn.Sequential(
             BinarizeConv2d(3, 128*self.infl_ratio, kernel_size=3, stride=1, padding=1, bias=True),
+            nn.BatchNorm2d(128 * self.infl_ratio),
             StochasticBinaryActivation(),
 
             BinarizeConv2d(128*self.infl_ratio, 128*self.infl_ratio, kernel_size=3, padding=1, bias=True),
+            nn.BatchNorm2d(128 * self.infl_ratio),
+            StochasticBinaryActivation(),
+
+
+            BinarizeConv2d(128*self.infl_ratio, 256*self.infl_ratio, kernel_size=3, padding=1, bias=True),
+            nn.BatchNorm2d(256 * self.infl_ratio),
             StochasticBinaryActivation(),
 
 
             BinarizeConv2d(256*self.infl_ratio, 256*self.infl_ratio, kernel_size=3, padding=1, bias=True),
-            StochasticBinaryActivation(),
-
-
-            BinarizeConv2d(256*self.infl_ratio, 256*self.infl_ratio, kernel_size=3, padding=1, bias=True),
+            nn.BatchNorm2d(256 * self.infl_ratio),
             StochasticBinaryActivation(),
 
 
             BinarizeConv2d(256*self.infl_ratio, 512*self.infl_ratio, kernel_size=3, padding=1, bias=True),
+            nn.BatchNorm2d(512 * self.infl_ratio),
             StochasticBinaryActivation(),
 
 
             BinarizeConv2d(512*self.infl_ratio, 512, kernel_size=3, padding=1, bias=True),
+            nn.BatchNorm2d(256 * self.infl_ratio),
             StochasticBinaryActivation()
 
         )
         self.classifier = nn.Sequential(
             BinarizeLinear(512 * 4 * 4, 1024, bias=True),
+            nn.BatchNorm1d(1024),
             StochasticBinaryActivation(),
 
             BinarizeLinear(1024, 1024, bias=True),
+            nn.BatchNorm1d(1024),
             StochasticBinaryActivation(),
 
             BinarizeLinear(1024, num_classes, bias=True),
+            nn.BatchNorm1d(num_classes, affine=False),
             StochasticBinaryActivation()
         )
 
