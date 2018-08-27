@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
 from torch.autograd import Function
-from .binarized_modules import  BinarizeLinear,BinarizeConv2d, StochasticBinaryActivation
+from .binarized_modules import  BinarizeLinear,BinarizeConv2d, StochasticBinaryActivation, SignActivation
 
 
 
@@ -15,44 +15,44 @@ class VGG_Cifar10(nn.Module):
             BinarizeConv2d(3, 128*self.infl_ratio, kernel_size=3, stride=1, padding=1,
                       bias=True),
             nn.BatchNorm2d(128*self.infl_ratio),
-            StochasticBinaryActivation(),
+            SignActivation(),
 
             BinarizeConv2d(128*self.infl_ratio, 128*self.infl_ratio, kernel_size=3, stride=2, padding=1, bias=True),
             #nn.MaxPool2d(kernel_size=2, stride=2),
             nn.BatchNorm2d(128*self.infl_ratio),
-            StochasticBinaryActivation(),
+            SignActivation(),
 
 
             BinarizeConv2d(128*self.infl_ratio, 256*self.infl_ratio, kernel_size=3, padding=1, bias=True),
             nn.BatchNorm2d(256*self.infl_ratio),
-            StochasticBinaryActivation(),
+            SignActivation(),
 
 
             BinarizeConv2d(256*self.infl_ratio, 256*self.infl_ratio, kernel_size=3, stride=2, padding=1, bias=True),
             #nn.MaxPool2d(kernel_size=2, stride=2),
             nn.BatchNorm2d(256*self.infl_ratio),
-            StochasticBinaryActivation(),
+            SignActivation(),
 
 
             BinarizeConv2d(256*self.infl_ratio, 512*self.infl_ratio, kernel_size=3, padding=1, bias=True),
             nn.BatchNorm2d(512*self.infl_ratio),
-            StochasticBinaryActivation(),
+            SignActivation(),
 
 
             BinarizeConv2d(512*self.infl_ratio, 512, kernel_size=3, stride=2, padding=1, bias=True),
             #nn.MaxPool2d(kernel_size=2, stride=2),
             nn.BatchNorm2d(512),
-            StochasticBinaryActivation()
+            SignActivation()
 
         )
         self.classifier = nn.Sequential(
             BinarizeLinear(512 * 4 * 4, 1024, bias=True),
             nn.BatchNorm1d(1024),
-            StochasticBinaryActivation(),
+            SignActivation(),
             #nn.Dropout(0.5),
             BinarizeLinear(1024, 1024, bias=True),
             nn.BatchNorm1d(1024),
-            StochasticBinaryActivation(),
+            SignActivation(),
             #nn.Dropout(0.5),
             BinarizeLinear(1024, num_classes, bias=True),
             nn.BatchNorm1d(num_classes, affine=False),

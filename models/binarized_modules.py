@@ -203,3 +203,33 @@ class StochasticBinaryActivation(nn.Module):
         out = self.binarizer(probs)
 
         return out
+
+
+class SignFunction(Function):
+
+    @staticmethod
+    def forward(ctx, input):
+        return torch.sign(input)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        out = grad_output * torch.le(grad_output.abs(), 1.0).float()
+        # print(out)
+        return out
+
+
+SignAct = SignFunction.apply
+
+
+class SignActivation(nn.Module):
+
+    def __init__(self):
+        super(SignActivation, self).__init__()
+        self.act = nn.Hardtanh()
+        self.signer = SignFunction.apply
+
+    def forward(self, x):
+        out1 = self.act(x)
+        out = self.signer(out1)
+
+        return out
