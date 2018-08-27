@@ -83,6 +83,8 @@ class BinarizeLinear(nn.Linear):
     ## SDPyle modified to include binarization_type for either ideal or with variations
     def forward(self, input):
 
+        idealTraining = False
+
         if input.size(1) != 784:
             input.data=Binarize(input.data)
             
@@ -97,8 +99,15 @@ class BinarizeLinear(nn.Linear):
         # if binarize_type == 'ideal':
         #     self.weight.data = Binarize(self.weight.org)
         # else:
-        self.weight.data = torch.cuda.FloatTensor(np.where(Binarize(self.weight.org, quant_mode='ge'), self.real_pos_weights, self.real_neg_weights))
-	
+        if self.training and idealTraining:
+            self.weight.data = Binarize(self.weight.org)
+
+        else:
+            self.weight.data = torch.cuda.FloatTensor(
+                np.where(Binarize(self.weight.org, quant_mode='ge'), self.real_pos_weights, self.real_neg_weights))
+
+
+
         print(self.weight.data)
 
         out = nn.functional.linear(input, self.weight)
@@ -107,6 +116,7 @@ class BinarizeLinear(nn.Linear):
             out += self.bias.view(1, -1).expand_as(out)
 
         return out
+
 
 class BinarizeConv2d(nn.Conv2d):
 
@@ -120,6 +130,9 @@ class BinarizeConv2d(nn.Conv2d):
 
 
     def forward(self, input):
+
+        idealTraining = False
+
         if input.size(1) != 3:
             input.data = Binarize(input.data)
         if not hasattr(self.weight,'org'):
@@ -132,8 +145,12 @@ class BinarizeConv2d(nn.Conv2d):
         # if binarize_type == 'ideal':
         #     self.weight.data = Binarize(self.weight.org)
         # else:
-        self.weight.data = torch.cuda.FloatTensor(
-            np.where(Binarize(self.weight.org, quant_mode='ge'), self.real_pos_weights, self.real_neg_weights))
+        if self.training and idealTraining:
+            self.weight.data = Binarize(self.weight.org)
+
+        else:
+            self.weight.data = torch.cuda.FloatTensor(
+                np.where(Binarize(self.weight.org, quant_mode='ge'), self.real_pos_weights, self.real_neg_weights))
 
         out = nn.functional.conv2d(input, self.weight, None, self.stride,
                                    self.padding, self.dilation, self.groups)
