@@ -56,8 +56,10 @@ class VGG_Cifar10(nn.Module):
             #nn.Dropout(0.5),
             BinarizeLinear(1024, num_classes, bias=True),
             nn.BatchNorm1d(num_classes, affine=False),
-            nn.LogSoftmax() 
         )
+
+        self.logSM = nn.LogSoftmax()
+        self.PAF = StochasticBinaryActivation()
 
         self.regime = {
             0: {'optimizer': 'Adam', 'betas': (0.9, 0.999),'lr': 5e-3},
@@ -72,6 +74,12 @@ class VGG_Cifar10(nn.Module):
         x = self.features(x)
         x = x.view(-1, 512 * 4 * 4)
         x = self.classifier(x)
+
+        if self.training:
+            x = self.logSM(x)
+        else:
+            x = self.PAF(x)
+
         return x
 
 

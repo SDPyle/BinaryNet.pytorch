@@ -161,6 +161,10 @@ class BinarizeConv2d(nn.Conv2d):
 
         return out
 
+##################################################################
+# Binary Stochastic Neuron Implementation primarily sourced from #
+# https://github.com/Wizaron/binary-stochastic-neurons           #
+##################################################################
 
 class BernoulliFunctionST(Function):
 
